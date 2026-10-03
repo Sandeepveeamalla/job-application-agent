@@ -1,60 +1,75 @@
-# Job Application AI Agent
+from __future__ import annotations
 
-This repository is a starter project for building an AI agent that helps identify relevant jobs, match your profile, and draft or prepare job applications.
+import argparse
+from dataclasses import asdict
+from pathlib import Path
 
-## What this project does
+from app.application_agent import build_application_plan, load_resume_text
+from app.config import load_config
+from app.job_sources import load_jobs_from_json
+from app.llm.openai_client import OpenAIClient
+from app.resume_matcher import rank_jobs
 
-The MVP includes:
-- reading a resume
-- loading job postings from a JSON file
-- extracting keywords and skills
-- ranking jobs by fit
-- generating an application plan for top matches
 
-This is a base for a future agent that can:
-- scrape job boards
-- generate tailored cover letters
-- auto-fill application forms
-- track submitted applications
-- schedule follow-ups
+def run_agent(resume_path: str | Path, jobs_path: str | Path, top_n: int = 5) -> list[dict]:
+    resume_text = load_resume_text(resume_path)
+    jobs = load_jobs_from_json(jobs_path)
+    ranked_jobs = rank_jobs(resume_text, jobs)
 
-## Project structure
+    client = OpenAIClient()
+    results = []
 
-- `app/` - Python source code
-- `sample_resume.txt` - example resume text
-- `sample_jobs.json` - example job postings
-- `requirements.txt` - Python dependencies
+    for item in ranked_jobs[:top_n]:
+        job = {
+            "title": item["title"],
+            "company": item["company"],
+            "location": item["location"],
+            "url": item["url"],
+            "description": next((job.description for job in jobs if job.title == item["title"] and job.company == item["company"]), ""),
+            "tags": next((job.tags for job in jobs if job.title == item["title"] and job.company == item["company"]), []),
+        }
 
-## Quick start
+        cover_letter = client.generate_cover_letter(job, resume_text)
+        tailored_bullets = client.customize_resume_bullets(job, resume_text)
+        interview_questions = client.generate_interview_questions(job)
 
-1. Create a virtual environment
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
+        plan = build_application_plan(item, resume_text)
+        results.append(
+            {
+                "title": item["title"],
+                "company": item["company"],
+                "location": item["location"],
+                "score": item["score"],
+                "matched_skills": item["matched_skills"],
+                "missing_skills": item["missing_skills"],
+                "cover_letter": cover_letter,
+                "resume_bullets": tailored_bullets,
+                "interview_questions": interview_questions,
+                "next_step": plan["next_steps"][0],
+            }
+        )
 
-2. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+    return results
 
-3. Run the demo
-   ```bash
-   python -m app.main --resume sample_resume.txt --jobs sample_jobs.json --top 5
-   ```
 
-## Example output
+def main() -> None:
+    parser = argparse.ArgumentParser(description="AI job matcher with LLM-generated application materials")
+    parser.add_argument("--resume", required=True, help="Path to resume text file")
+    parser.add_argument("--jobs", required=True, help="Path to jobs JSON file")
+    parser.add_argument("--top", type=int, default=5, help="Number of top matches to process")
+    args = parser.parse_args()
 
-The CLI prints ranked jobs with match scores and highlights matched vs missing skills.
+    config = load_config()
+    results = run_agent(args.resume, args.jobs, top_n=args.top)
 
-## Recommended next steps
+    for idx, item in enumerate(results, 1):
+        print(f"{idx}. {item['title']} @ {item['company']} - Score: {item['score']}/100")
+        print(f"   Match: {', '.join(item['matched_skills'][:8]) or 'none'}")
+        print(f"   Missing: {', '.join(item['missing_skills'][:5]) or 'none'}")
+        print(f"   Next Step: {item['next_step']}")
+        print(f"   Cover Letter Preview: {item['cover_letter'][:150]}...")
+        print()
 
-1. Add real job board scraping
-2. Integrate an LLM for resume tailoring and cover letters
-3. Add browser automation for form-based applications
-4. Save application history in a database
-5. Build a dashboard to monitor replies and interviews
 
-## Notes
-
-This repo intentionally keeps the first version simple and easy to extend. It is designed to help you build a real agent incrementally rather than trying to launch a full automation system all at once.
+if __name__ == "__main__":
+    main()
