@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from app.job_sources import rank_jobs
-from app.job_sources import load_jobs_from_json  # noqa: F401
+from app.resume_matcher import rank_jobs
+from app.job_sources import load_jobs_from_json
 from app.application_agent import build_application_plan
 from app.config import load_config
 from app.resume_matcher import load_resume_text
