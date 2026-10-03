@@ -1,0 +1,37 @@
+{
+  "jobs": [
+    {
+      "title": "Senior Python Engineer",
+      "company": "Acme Labs",
+      "location": "Remote",
+      "url": "https://example.com/jobs/python-engineer",
+      "description": "We are looking for a senior Python engineer with experience in APIs, backend systems, testing, Python services, and cloud deployment.",
+      "source": "example",
+      "salary": "$140000",
+      "employment_type": "full-time",
+      "tags": ["python", "api", "backend", "sql", "aws", "testing"]
+    },
+    {
+      "title": "Machine Learning Engineer",
+      "company": "BluePeak AI",
+      "location": "New York, NY",
+      "url": "https://example.com/jobs/ml-engineer",
+      "description": "Build ML pipelines, model deployment, data processing, Python tooling, experimentation, and stakeholder communication.",
+      "source": "example",
+      "salary": "$160000",
+      "employment_type": "full-time",
+      "tags": ["python", "machine learning", "data", "model deployment", "experimentation"]
+    },
+    {
+      "title": "Product Manager",
+      "company": "Northstar Health",
+      "location": "Boston, MA",
+      "url": "https://example.com/jobs/product-manager",
+      "description": "Own roadmap, gather requirements, work closely with engineering, and drive customer-focused product decisions.",
+      "source": "example",
+      "salary": "$135000",
+      "employment_type": "full-time",
+      "tags": ["product", "roadmap", "stakeholders", "analytics"]
+    }
+  ]
+}
